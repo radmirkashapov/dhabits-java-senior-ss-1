@@ -1,5 +1,6 @@
 package com.poluhin.ss.demo.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.*;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.security.config.Customizer;
@@ -24,7 +25,11 @@ import static org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType.
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class WebSecurityConfig {
+
+
+    private final JwtAuthConfigurer jwtAuthConfigurer;
 
     @Bean
     SecurityFilterChain basicAuthSecurityFilter(HttpSecurity http) throws Exception {
@@ -44,39 +49,19 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    DataSource dataSource() {
-        return new EmbeddedDatabaseBuilder()
-                .setType(H2)
-                .addScript(JdbcDaoImpl.DEFAULT_USER_SCHEMA_DDL_LOCATION)
-                .build();
-    }
+    SecurityFilterChain premiumSecurityFilter(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/premium/**", "/api/auth/jwt")
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests((authorize) ->
+                        authorize
+                                .anyRequest().authenticated())
+                .sessionManagement((session) ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .apply(jwtAuthConfigurer);
 
-    @Bean
-    public static PasswordEncoder bCryptPasswordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    /**
-     * Можно добавить role hierarchy ADMIN > USER
-     * В SS 6 поддержки нет
-     */
-    @Bean
-    UserDetailsService userDetailsService(DataSource dataSource, PasswordEncoder passwordEncoder) {
-        UserDetails user = User.builder()
-                .username("user")
-                .password(passwordEncoder.encode("userpass"))
-                .roles("USER")
-                .build();
-        UserDetails admin = User.builder()
-                .username("admin")
-                .password(passwordEncoder.encode("adminpass"))
-                .roles("ADMIN")
-                .build();
-
-        JdbcUserDetailsManager users = new JdbcUserDetailsManager(dataSource);
-        users.createUser(user);
-        users.createUser(admin);
-        return users;
+        return http.build();
     }
 
 }

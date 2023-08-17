@@ -21,3 +21,15 @@ spring:
 
 server:
   port: 9000
+
+
+
+jwt:
+  issuer:
+  tokens:
+    access:
+      ttl-in-seconds: 200
+      key: dy3dh56egfsjd6tdj345tfdfgetdb5g3f33f3h3j2gfdhd7dndg3n2f2n2f22f2j2
+    refresh:
+      ttl-in-seconds: 18000
+      key: fhfyfhn343g3539363g39252ged7d9d9d9bfh4fhf2g32hg3hwg2h2g4g6hg67hg8jg8j
